@@ -15,7 +15,6 @@ def _reconstruct_pixel_data(chunks):
     decompressed = zlib.decompress(idat_data)
     
     # Ta część jest uproszczeniem; prawidłowa rekonstrukcja wymaga obsługi filtrów Paeth, Sub, etc.
-    # Dla celów tego projektu, zakładamy prosty model lub akceptujemy, że może on nie działać dla wszystkich PNG.
     bytes_per_pixel = {0:1, 2:3, 3:1, 4:2, 6:4}[color_type]
     if bit_depth == 16:
         bytes_per_pixel *= 2
@@ -51,26 +50,45 @@ def display_image(chunks):
         print(f"Błąd podczas wyświetlania obrazu: {e}")
 
 
-def compute_and_show_fft(chunks):
-    """Oblicza i wyświetla transformatę Fouriera obrazu."""
+def compute_and_show_fft_from_file(file_path):
+    """
+    Wczytuje obraz z podanej ścieżki pliku, a następnie oblicza i wyświetla
+    widmo amplitudowe oraz fazowe za pomocą transformaty Fouriera.
+    """
     try:
-        pixel_data, width, height, color_type, bit_depth = _reconstruct_pixel_data(chunks)
-        
-        # Konwersja do skali szarości, jeśli jest to obraz kolorowy
-        if color_type in [2, 6]: # RGB lub RGBA
-            img = np.frombuffer(pixel_data, dtype=np.uint8).reshape((height, width, -1))
-            # Konwersja do skali szarości (luminancja)
-            gray_img = np.dot(img[...,:3], [0.2989, 0.5870, 0.1140])
-        else:
-            gray_img = np.frombuffer(pixel_data, dtype=np.uint8).reshape((height, width))
+        # Wczytanie obrazu za pomocą Pillow
+        img = Image.open(file_path)
+        img_array = np.array(img)
 
+        # Konwersja obrazu do skali szarości (luminancji)
+        gray_img_pil = img.convert('L') # L - skala szarości
+        gray_img = np.array(gray_img_pil)
+
+        # Obliczanie FFT
         fft_img = np.fft.fft2(gray_img)
-        fft_img_shifted = np.fft.fftshift(fft_img)
-        magnitude_spectrum = 20 * np.log(np.abs(fft_img_shifted))
-        
-        plt.imshow(magnitude_spectrum, cmap='viridis')
-        plt.title('Widmo Amplitudowe (FFT)')
+        fft_img_shifted = np.fft.fftshift(fft_img) # Przesunięcie składowej zerowej do centrum
+
+        # Widmo Amplitudowe
+        # Dodajemy małą stałą, aby uniknąć logarytmowania zera
+        magnitude_spectrum = 20 * np.log(np.abs(fft_img_shifted) + 1e-9) 
+
+        # Wyświetlanie obu widm
+        plt.figure(figsize=(12, 6))
+
+        plt.subplot(1, 2, 1)
+        plt.imshow(img_array)
+        plt.title("Oryginalny obraz")
+        plt.axis('off')
+
+        plt.subplot(1, 2, 2)
+        plt.imshow(magnitude_spectrum)
+        plt.title("Widmo Fouriera (amplituda w skali log)")
+        plt.axis('off')
+
+        plt.tight_layout()
         plt.show()
 
+    except FileNotFoundError:
+        print(f"Błąd: Plik '{file_path}' nie został znaleziony.")
     except Exception as e:
         print(f"Błąd podczas obliczania FFT: {e}")
