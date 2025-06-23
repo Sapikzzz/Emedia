@@ -32,20 +32,20 @@ def compute_and_show_fft_from_file(file_path):
         # Wyświetlanie obu widm
         plt.figure(figsize=(12, 6))
 
-        plt.subplot(1, 2, 1)
-        plt.imshow(img_array)
+        plt.subplot(1, 3, 1)
+        plt.imshow(gray_img, cmap='gray')
         plt.title("Oryginalny obraz")
         plt.axis('off')
 
-        plt.subplot(1, 2, 2)
+        plt.subplot(1, 3, 2)
         plt.imshow(magnitude_spectrum)
         plt.title("Widmo Fouriera (amplituda w skali log)")
         plt.axis('off')
         
-        # plt.subplot(1, 2, 3)
-        # plt.imshow(ifft_img, cmap='gray')
-        # plt.title("Obraz po IFFT")
-        # plt.axis('off')
+        plt.subplot(1, 3, 3)
+        plt.imshow(ifft_img, cmap='gray')
+        plt.title("Obraz po IFFT")
+        plt.axis('off')
 
         plt.tight_layout()
         plt.show()
