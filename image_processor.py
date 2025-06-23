@@ -26,6 +26,9 @@ def compute_and_show_fft_from_file(file_path):
         # Dodajemy małą stałą, aby uniknąć logarytmowania zera
         magnitude_spectrum = 20 * np.log(np.abs(fft_img_shifted) + 1e-9) 
 
+        # Odwrócenie FFT
+        ifft_img = np.fft.ifft2(fft_img).real
+
         # Wyświetlanie obu widm
         plt.figure(figsize=(12, 6))
 
@@ -38,6 +41,11 @@ def compute_and_show_fft_from_file(file_path):
         plt.imshow(magnitude_spectrum)
         plt.title("Widmo Fouriera (amplituda w skali log)")
         plt.axis('off')
+        
+        # plt.subplot(1, 2, 3)
+        # plt.imshow(ifft_img, cmap='gray')
+        # plt.title("Obraz po IFFT")
+        # plt.axis('off')
 
         plt.tight_layout()
         plt.show()

@@ -21,10 +21,10 @@ def main():
         # Wyświetlanie informacji z chunków ancillary
         png_handler.print_ancillary_chunks_info(chunks, ihdr_info['color_type'], ihdr_info['bit_depth']) 
 
-        # 4. Oblicz i wyświetl FFT
+        # 3. Oblicz i wyświetl FFT
         image_processor.compute_and_show_fft_from_file(file_path)
 
-        # 5. Dokonaj anonimizacji
+        # 4. Dokonaj anonimizacji
         output_path = 'anonymized.png'
         png_handler.anonymize_png(chunks, output_path)
 
