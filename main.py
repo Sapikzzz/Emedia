@@ -1,9 +1,6 @@
-# main.py
-
 import sys
 import png_handler
 import image_processor
-import test_fft
 
 def main():
     """Główna funkcja programu."""
@@ -16,20 +13,15 @@ def main():
         # 1. Wczytaj i przeanalizuj plik PNG
         chunks = png_handler.read_png_file(file_path)
 
-        # 2. Wyświetl informacje o chunkach
+        # 2. Wyświetl informacje o chunkach krytycznych
         print("\n=== Znalezione chunki ===")
         print(", ".join([chunk['type'] for chunk in chunks]))
-        ihdr_info = png_handler.print_critical_chunks_info(chunks)
+        ihdr_info = png_handler.print_critical_chunks_info(chunks, False)
         
-        # Nowy krok dla oceny 4.0: Wyświetl informacje o dodatkowych chunkach
+        # Wyświetlanie informacji z chunków ancillary
         png_handler.print_ancillary_chunks_info(chunks, ihdr_info['color_type'], ihdr_info['bit_depth']) 
 
-        # 3. Wyświetl obraz
-        print("\nPróba wyświetlenia obrazu...")
-        image_processor.display_image(chunks)
-
         # 4. Oblicz i wyświetl FFT
-        # print("Obliczanie transformaty Fouriera...")
         image_processor.compute_and_show_fft_from_file(file_path)
 
         # 5. Dokonaj anonimizacji

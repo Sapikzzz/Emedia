@@ -10,13 +10,13 @@ def _read_chunk(file):
         length_bytes = file.read(4)
         if not length_bytes:
             return None
-        length = struct.unpack('>I', length_bytes)[0] # Rozpakowuje długość chunku jako 4-bajtową liczbę całkowitą - długość danych w chunku
+        length = struct.unpack('>I', length_bytes)[0]
 
         type_bytes = file.read(4)
-        chunk_type = type_bytes.decode('ascii') # Decode 4 bajty jako ASCII - typ chunku
+        chunk_type = type_bytes.decode('ascii')
 
-        data = file.read(length)    # Odczytuje dane chunku o długości określonej przez 'length'
-        crc = file.read(4)  # Odczytuje 4 bajty CRC - suma kontrolna chunku
+        data = file.read(length)
+        crc = file.read(4)
 
         return {'length': length, 'type': chunk_type, 'data': data, 'crc': crc}
     except (struct.error, IndexError):
@@ -24,13 +24,13 @@ def _read_chunk(file):
 
 def read_png_file(file_path):
     """Odczytuje plik PNG, sprawdza sygnaturę i zwraca listę chunków."""
-    with open(file_path, 'rb') as f:                                    # otwieramy plik w trybie read binary 
-        if f.read(8) != b'\x89PNG\r\n\x1a\n':                           # Sprawdzenie sygnatury PNG - pierwsze 8 bajtów musi być równe tej wartości
+    with open(file_path, 'rb') as f:
+        if f.read(8) != b'\x89PNG\r\n\x1a\n':
             raise ValueError("To nie jest prawidłowy plik PNG")
 
         print("=== Sygnatura PNG poprawna ===")
         chunks = []
-        while True:                                                     # Odczytujemy kolejne chunki aż do napotkania końcowego chunku IEND
+        while True:
             chunk = _read_chunk(f)
             if chunk is None or chunk['type'] == 'IEND':
                 if chunk:
@@ -39,10 +39,10 @@ def read_png_file(file_path):
             chunks.append(chunk)
     return chunks
 
-def print_critical_chunks_info(chunks):
+def print_critical_chunks_info(chunks, additional_info=False):
     """Przetwarza i wyświetla informacje z krytycznych chunków."""
     print("\n=== Informacje z krytycznych chunków ===")
-    palette_numpy_array = None # Dodajemy zmienną do przechowywania tablicy NumPy
+    palette_numpy_array = None
     for chunk in chunks:
         if chunk['type'] == 'IHDR':
             ihdr_info = parse_ihdr_chunk(chunk['data'])
@@ -64,31 +64,33 @@ def print_critical_chunks_info(chunks):
             num_entries = len(palette_data) // 3
             print(f"Liczba wpisów w palecie: {num_entries}")
             
-            # Wypisywanie każdego koloru
             for i in range(num_entries):
                 r = palette_data[i * 3]
                 g = palette_data[i * 3 + 1]
                 b = palette_data[i * 3 + 2]
-                # Formatowanie do trzech cyfr dla czytelności i do formatu HEX
                 print(f"  Indeks {i:03d}: RGB({r:3d}, {g:3d}, {b:3d}) | HEX: #{r:02X}{g:02X}{b:02X}")
 
-
-            # Generowanie tablicy NumPy dla palety
+            # Tablica palety do wygenerowania obrazu
             palette_numpy_array = generate_palette_image_numpy(palette_data)
 
         elif chunk['type'] == 'IDAT':
-            print(f"\n[IDAT] - Rozmiar skompresowanych danych: {chunk['length']} bajtów")
+            if additional_info:
+                print(f"\n[IDAT] - Rozmiar skompresowanych danych: {chunk['length']} bajtów")
+                print(f"  Pełne dane IDAT (reprezentacja bajtowa): {chunk['data']}")
+                print(f"  CRC: {chunk['crc'].hex()}")
 
         elif chunk['type'] == 'IEND':
-            print("\n[IEND - Koniec obrazu]")
-        
-        return ihdr_info
+            if additional_info:
+                print("\n[IEND - Koniec obrazu]")
+                print(f"  Surowe dane IEND: {chunk['data']}")
+                print(f"  CRC: {chunk['crc'].hex()}")
 
-
-    # Zapisanie obrazu palety, jeśli został wygenerowany
     if palette_numpy_array is not None:
         plt.imsave("palette.png", palette_numpy_array)
         print("\nObraz palety zapisano do pliku palette.png")
+    
+    return ihdr_info
+
 
 def print_ancillary_chunks_info(chunks, color_type, bit_depth):
     """Przetwarza i wyświetla informacje z wybranych dodatkowych chunków."""
@@ -102,8 +104,8 @@ def print_ancillary_chunks_info(chunks, color_type, bit_depth):
                 # null_byte_index znajduje pierwszy bajt null, który oddziela słowo kluczowe od tekstu
                 null_byte_index = chunk['data'].find(b'\x00')
                 if null_byte_index != -1:
-                    keyword = chunk['data'][:null_byte_index].decode('utf-8')
-                    text = chunk['data'][null_byte_index + 1:].decode('utf-8')
+                    keyword = chunk['data'][:null_byte_index].decode('latin-1')
+                    text = chunk['data'][null_byte_index + 1:].decode('latin-1')
                     print(f"\n[tEXt - Dane tekstowe]")
                     print(f"  Słowo kluczowe: {keyword}")
                     print(f"{text}")
@@ -119,10 +121,10 @@ def print_ancillary_chunks_info(chunks, color_type, bit_depth):
                 # Zkompresowany tekst zamiast normalnego tekstu
                 null_byte_index = chunk['data'].find(b'\x00')
                 if null_byte_index != -1:
-                    keyword = chunk['data'][:null_byte_index].decode('utf-8')
+                    keyword = chunk['data'][:null_byte_index].decode('latin-1')
                     compression_method = chunk['data'][null_byte_index + 1]
                     compressed_text = chunk['data'][null_byte_index + 2:]
-                    decompressed_text = zlib.decompress(compressed_text).decode('utf-8')
+                    decompressed_text = zlib.decompress(compressed_text).decode('latin-1')
                     print(f"\n[zTXt - Skompresowane dane tekstowe]")
                     print(f"  Słowo kluczowe: {keyword}")
                     print(f"  Metoda kompresji: {'Deflate' if compression_method == 0 else 'Nieznana'}")
@@ -221,13 +223,12 @@ def print_ancillary_chunks_info(chunks, color_type, bit_depth):
 
 
     if not found_ancillary:
-        print("Brak wykrytych dodatkowych chunków (tEXt, zTXt, iTXt, eXIf, gAMA, cHRM, sRGB, bKGD, pHYs).")
+        print("Brak wykrytych dodatkowych chunków.")
 
 
 def anonymize_png(chunks, output_path):
     """Anonimizuje PNG: usuwa niekrytyczne chunki i scala IDATy w jeden, zachowując poprawną kolejność."""
 
-    critical_types = ['IHDR', 'PLTE', 'IDAT', 'IEND']
     ihdr = None
     plte = None
     idat_data = b''
