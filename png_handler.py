@@ -1,7 +1,6 @@
 import struct
 import zlib
 import matplotlib.pyplot as plt
-import numpy as np
 from utils import parse_itxt_chunk_data,  generate_palette_image_numpy, parse_ihdr_chunk
 
 def _read_chunk(file):
@@ -74,14 +73,14 @@ def print_critical_chunks_info(chunks, additional_info=False):
             palette_numpy_array = generate_palette_image_numpy(palette_data)
 
         elif chunk['type'] == 'IDAT':
+            print(f"\n[IDAT] - Rozmiar skompresowanych danych: {chunk['length']} bajtów")
             if additional_info:
-                print(f"\n[IDAT] - Rozmiar skompresowanych danych: {chunk['length']} bajtów")
                 print(f"  Pełne dane IDAT (reprezentacja bajtowa): {chunk['data']}")
                 print(f"  CRC: {chunk['crc'].hex()}")
 
         elif chunk['type'] == 'IEND':
+            print("\n[IEND - Koniec obrazu]")
             if additional_info:
-                print("\n[IEND - Koniec obrazu]")
                 print(f"  Surowe dane IEND: {chunk['data']}")
                 print(f"  CRC: {chunk['crc'].hex()}")
 

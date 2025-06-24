@@ -13,7 +13,7 @@ def main():
         # 1. Wczytaj i przeanalizuj plik PNG
         chunks = png_handler.read_png_file(file_path)
 
-        # 2. Wyświetl informacje o chunkach krytycznych
+        # 2. Wyświetl informacje o chunkach
         print("\n=== Znalezione chunki ===")
         print(", ".join([chunk['type'] for chunk in chunks]))
         ihdr_info = png_handler.print_critical_chunks_info(chunks, False)
@@ -24,7 +24,7 @@ def main():
         # 3. Oblicz i wyświetl FFT
         image_processor.compute_and_show_fft_from_file(file_path)
 
-        # 4. Dokonaj anonimizacji
+        # 4. Anonimizacja
         output_path = 'anonymized.png'
         png_handler.anonymize_png(chunks, output_path)
 

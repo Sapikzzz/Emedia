@@ -1,14 +1,15 @@
-# image_processor.py
-
-import zlib
-import struct
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 
+import numpy as np
+from PIL import Image
+import matplotlib.pyplot as plt
+
 def compute_and_show_fft_from_file(file_path):
     """
-    Oblicza i wyświetla widmo amplitudowe za pomocą transformaty Fouriera.
+    Oblicza i wyświetla widmo amplitudowe oraz widmo fazowe za pomocą transformaty Fouriera,
+    a także obraz po odwróconej transformacie Fouriera.
     """
     try:
         img = Image.open(file_path)
@@ -26,23 +27,30 @@ def compute_and_show_fft_from_file(file_path):
         # Dodajemy małą stałą, aby uniknąć logarytmowania zera
         magnitude_spectrum = 20 * np.log(np.abs(fft_img_shifted) + 1e-9) 
 
+        # Widmo Fazowe
+        phase_spectrum = np.angle(fft_img_shifted)
+
         # Odwrócenie FFT
         ifft_img = np.fft.ifft2(fft_img).real
 
-        # Wyświetlanie obu widm
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=(16, 8))
 
-        plt.subplot(1, 3, 1)
+        plt.subplot(1, 4, 1)
         plt.imshow(gray_img, cmap='gray')
         plt.title("Oryginalny obraz")
         plt.axis('off')
 
-        plt.subplot(1, 3, 2)
+        plt.subplot(1, 4, 2)
         plt.imshow(magnitude_spectrum)
         plt.title("Widmo Fouriera (amplituda w skali log)")
         plt.axis('off')
         
-        plt.subplot(1, 3, 3)
+        plt.subplot(1, 4, 3)
+        plt.imshow(phase_spectrum)
+        plt.title("Widmo Fazowe")
+        plt.axis('off')
+
+        plt.subplot(1, 4, 4)
         plt.imshow(ifft_img, cmap='gray')
         plt.title("Obraz po IFFT")
         plt.axis('off')
